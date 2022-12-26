@@ -1,0 +1,174 @@
+﻿private async Task<DialogTurnResult> GetInputsAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+{
+    // Create a LuisRecognizer using the app ID and subscription key for your LUIS app
+    var luisRecognizer = new LuisRecognizer(
+        new LuisApplication(appId, subscriptionKey),
+        new LuisPredictionOptions
+        {
+            IncludeAllIntents = true,
+            IncludeInstanceData = true
+        },
+        true,
+        null);
+
+    // Prompt the user for their age, name, tickets, and confirmation
+    return await stepContext.PromptAsync(
+        "inputsPrompt",
+        new PromptOptions
+        {
+            Prompt = MessageFactory.Text("Please enter your age, name, number of tickets, and confirmation (yes/no) separated by commas."),
+            RetryPrompt = MessageFactory.Text("Please enter valid input in the format 'age, name, tickets, confirmation'."),
+        },
+        cancellationToken);
+}
+
+
+
+
+
+
+
+private async Task<DialogTurnResult> FinalStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+{
+    // Get the inputs the user provided
+    var inputs = stepContext.Result;
+
+    // Recognize the user's input using the LuisRecognizer
+    var recognizerResult = await _luisRecognizer.RecognizeAsync(stepContext.Context, cancellationToken);
+
+    // Extract the age, name, tickets, and confirmation entities from the recognition result
+    var ageEntity = recognizerResult.Entities.FirstOrDefault(e => e.Type == "age");
+    var nameEntity = recognizerResult.Entities.FirstOrDefault(e => e.Type == "name");
+    var ticketsEntity = recognizerResult.Entities.FirstOrDefault(e => e.Type == "tickets");
+    var confirmEntity = recognizerResult.Entities.FirstOrDefault(e => e.Type == "confirmation");
+
+    // If any of the entities are not found, prompt the user for the missing information
+    if (ageEntity == null || nameEntity == null || ticketsEntity == null || confirmEntity == null)
+    {
+        return await stepContext.PromptAsync(
+            "inputsPrompt",
+            new PromptOptions
+            {
+                Prompt = MessageFactory.Text("Please enter your age, name, number of tickets, and confirmation (yes/no) separated by commas."),
+                RetryPrompt = MessageFactory.Text("Please enter valid input in the format 'age, name, tickets, confirmation'."),
+            },
+            cancellationToken);
+    }
+
+    // Parse the age, name, tickets, and confirmation values from the entities
+    var age = int.Parse(ageEntity.Entity);
+    var name = nameEntity.Entity;
+    var tickets = int.Parse(ticketsEntity.Entity);
+    var confirm = confirmEntity.Entity.Equals("yes", StringComparison.InvariantCultureIgnoreCase);
+
+    // Process the user's order
+    await ProcessOrderAsync(age, name, tickets, confirm, cancellationToken);
+
+    // End the dialog
+    return await stepContext.EndDialogAsync(cancellationToken);
+}
+
+
+private async Task<DialogTurnResult> FinalStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+{
+    // Get the inputs the user provided
+    var inputs = stepContext.Result;
+
+    // Define the regular expressions for matching the age, name, tickets, and confirmation values
+    var ageRegex = new Regex(@"\b(\d+)\b", RegexOptions.IgnoreCase);
+    var nameRegex = new Regex(@"\b([a-zA-Z]+)\b", RegexOptions.IgnoreCase);
+    var ticketsRegex = new Regex(@"\b(\d+)\b", RegexOptions.IgnoreCase);
+    var confirmRegex = new Regex(@"\b(yes|no)\b", RegexOptions.IgnoreCase);
+
+    // Initialize the age, name, tickets, and confirmation variables
+    var age = 0;
+    var name = "";
+    var tickets = 0;
+    var confirm = false;
+
+    // Iterate through the user's input and extract the age, name, tickets, and confirmation values
+    foreach (Match match in ageRegex.Matches(inputs))
+    {
+        age = int.Parse(match.Value);
+    }
+    foreach (Match match in nameRegex.Matches(inputs))
+    {
+        name = match.Value;
+    }
+    foreach (Match match in ticketsRegex.Matches(inputs))
+    {
+        tickets = int.Parse(match.Value);
+    }
+    foreach (Match match in confirmRegex.Matches(inputs))
+    {
+        confirm = match.Value.Equals("yes", StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    // If any of the age, name, tickets, or confirmation values are not found, prompt the user for the missing information
+    if (age == 0 || string.IsNullOrEmpty(name) || tickets == 0)
+    {
+        return await stepContext.PromptAsync(
+            "inputsPrompt",
+            new PromptOptions
+            {
+                Prompt = MessageFactory.Text("Please enter your age, name, number of tickets, and confirmation (yes/no) separated by any non-alphanumeric characters."),
+                RetryPrompt = MessageFactory.Text("Please enter valid input in the format 'age name tickets confirmation'."),
+            },
+            cancellationToken);
+    }
+
+    // Process the user's order
+    await ProcessOrderAsync(age, name, tickets, confirm, cancellationToken);
+
+    // End the dialog
+    return await stepContext.EndDialogAsync(cancellationToken);
+}
+
+
+////graph api
+
+
+
+how to send mail to outlook in botframework v4 c# from bot inputs
+To send an email using the Microsoft Bot Framework and C#, you will need to use the Microsoft Graph API. Here is an outline of the steps you will need to follow:
+
+First, you will need to register your bot with the Microsoft Bot Framework and obtain a Microsoft App ID and password.
+
+Next, you will need to grant your bot the necessary permissions to access the Microsoft Graph API by following the steps in this tutorial: https://docs.microsoft.com/en-us/graph/auth-register-app-v2.
+
+Once you have completed these steps, you will be able to use the Microsoft Graph API to send emails from your bot. Here is an example of how you can use the Microsoft Graph API to send an email from your bot:
+
+Copy code
+using Microsoft.Graph;
+
+// Replace YOUR_CLIENT_ID and YOUR_CLIENT_SECRET with your Microsoft App ID and password
+string clientId = "YOUR_CLIENT_ID";
+string clientSecret = "YOUR_CLIENT_SECRET";
+
+// Authenticate with the Microsoft Graph API
+var authProvider = new ClientCredentialProvider(clientId, clientSecret);
+var graphClient = new GraphServiceClient(authProvider);
+
+// Set the properties of the email you want to send
+var message = new Message
+{
+    Subject = "Hello from my bot!",
+    Body = new ItemBody
+    {
+        ContentType = BodyType.Text,
+        Content = "This is the body of my email."
+    },
+    ToRecipients = new List<Recipient>
+    {
+        new Recipient
+        {
+            EmailAddress = new EmailAddress
+            {
+                Address = "recipient@outlook.com"
+            }
+        }
+    }
+};
+
+// Send the email
+await graphClient.Me.SendMail(message, true).Request().PostAsync();

@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "Hash": "6aeT0/LytjPRSL4M2t+uBlobdr1K9RMPW9YKJsvsfuw=",
+  "Source": "EchoBot111",
+  "BasePath": "_content/EchoBot111",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "EchoBot111\\wwwroot",
+      "Source": "EchoBot111",
+      "ContentRoot": "C:\\Users\\saina\\OneDrive\\Desktop\\EchoBot111\\EchoBot111\\wwwroot\\",
+      "BasePath": "_content/EchoBot111",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\saina\\OneDrive\\Desktop\\EchoBot111\\EchoBot111\\wwwroot\\default.htm",
+      "SourceId": "EchoBot111",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\saina\\OneDrive\\Desktop\\EchoBot111\\EchoBot111\\wwwroot\\",
+      "BasePath": "_content/EchoBot111",
+      "RelativePath": "default.htm",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\default.htm"
+    }
+  ]
+}

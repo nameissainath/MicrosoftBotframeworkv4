@@ -1,0 +1,218 @@
+﻿using System.Linq;
+using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.AI.QnA;
+
+public async Task GetAnswerWithMetadata(ITurnContext turnContext, QnAMakerClient qnaClient)
+{
+    // Set the metadata filter
+    string metadataFilter = "Context=ProductSupport";
+
+    // Get the answers from the knowledge base
+    QueryResult[] results = await qnaClient.GetAnswersAsync(turnContext, metadataFilter: metadataFilter);
+    if (results.Any())
+    {
+        // Return the first answer that matches the metadata filter
+        await turnContext.SendActivityAsync(results.First().Answer);
+    }
+    else
+    {
+        // No matching answers were found
+        await turnContext.SendActivityAsync("Sorry, I couldn't find an answer for that question.");
+    }
+}
+
+
+------------------------------------------
+
+using System.Linq;
+using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.AI.QnA;
+
+public async Task GetAnswerWithStrictFilters(ITurnContext turnContext, QnAMakerClient qnaClient)
+{
+    // Set the strict filters
+    string[] strictFilters = new string[] { "Context=ProductSupport", "Product=MyProduct" };
+
+    // Get the answers from the knowledge base
+    QueryResult[] results = await qnaClient.GetAnswersAsync(turnContext, strictFilters: strictFilters);
+    if (results.Any())
+    {
+        // Return the first answer that matches the strict filters
+        await turnContext.SendActivityAsync(results.First().Answer);
+    }
+    else
+    {
+        // No matching answers were found
+        await turnContext.SendActivityAsync("Sorry, I couldn't find an answer for that question.");
+    }
+}
+--------------------------------------------------------------------
+
+
+n the Bot Framework v4, you can use the Source property of the QueryResult class to filter QnA answers by source. The Source property indicates where the answer was retrieved from, such as the QnA Maker knowledge base or an external service.
+
+Here is an example of how you can use the Source property to filter QnA answers by source in C#:
+
+Copy code
+using System.Linq;
+using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.AI.QnA;
+
+public async Task GetAnswerFromSpecificSource(ITurnContext turnContext, QnAMakerClient qnaClient)
+{
+    // Set the source filter
+    string sourceFilter = "MyQnAKnowledgeBase";
+
+    // Get the answers from the knowledge base
+    QueryResult[] results = await qnaClient.GetAnswersAsync(turnContext);
+    if (results.Any())
+    {
+        // Return the first answer from the specified source
+        QueryResult answer = results.FirstOrDefault(r => r.Source == sourceFilter);
+        if (answer != null)
+        {
+            await turnContext.SendActivityAsync(answer.Answer);
+        }
+        else
+        {
+            // No matching answers were found
+            await turnContext.SendActivityAsync("Sorry, I couldn't find an answer from the specified source.");
+        }
+    }
+    else
+    {
+        // No matching answers were found
+        await turnContext.SendActivityAsync("Sorry, I couldn't find an answer for that question.");
+    }
+}
+
+----------------------------------------------------
+
+o display QnA Maker questions in a carousel based on metadata in the Bot Framework v4 using C#, you can follow these steps:
+
+In your bot code, use the GetAnswersAsync method of the QnAMakerClient class to retrieve the questions from the knowledge base and filter the results based on the metadata.
+Copy code
+using System.Linq;
+using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.AI.QnA;
+
+public async Task GetQuestionsWithMetadata(ITurnContext turnContext, QnAMakerClient qnaClient)
+{
+    // Set the metadata filter
+    string metadataFilter = "Context=ProductSupport";
+
+    // Get the questions from the knowledge base
+    QueryResult[] results = await qnaClient.GetAnswersAsync(turnContext, metadataFilter: metadataFilter, isTest: true);
+    if (results.Any())
+    {
+        // Create the carousel
+        var carousel = new CarouselCard();
+        carousel.Items = new List<CardAction>();
+
+        // Add the questions to the carousel
+        foreach (QueryResult result in results)
+        {
+            carousel.Items.Add(new CardAction()
+            {
+                Title = result.Questions[0],
+                Type = ActionTypes.ImBack,
+                Value = result.Questions[0]
+            });
+        }
+
+        // Create a message with the carousel
+        var message = MessageFactory.Attachment(new Attachment()
+        {
+            Content = carousel,
+            ContentType = "application/vnd.microsoft.card.adaptive"
+        });
+
+        // Send the message to the user
+        await turnContext.SendActivityAsync(message);
+    }
+    else
+    {
+        // No matching questions were found
+        await turnContext.SendActivityAsync("Sorry, I couldn't find any questions for that topic.");
+    }
+}
+---------------------------------------------------------------------
+
+
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace QnA_Bot
+{
+    public static class QnAAnalytics
+    {
+        private static readonly HttpClient client = new HttpClient();
+        private static readonly string kbId = "{your knowledge base ID}";
+        private static readonly string endpointKey = "{your QnA Maker endpoint key}";
+
+        public static async Task<string> GetTopQuestionsAsync()
+        {
+            string response = "";
+
+            try
+            {
+                // Set the API endpoint URL
+                string url = $"https://{kbId}.azurewebsites.net/qnamaker/v4.0/analytics/topQuestions";
+
+                // Set the API request headers
+                client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", endpointKey);
+                client.DefaultRequestHeaders.Add("Content-Type", "application/json");
+
+                // Send the API request
+                HttpResponseMessage httpResponse = await client.GetAsync(url);
+
+                // Process the API response
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    string jsonResponse = await httpResponse.Content.ReadAsStringAsync();
+                    dynamic data = JsonConvert.DeserializeObject(jsonResponse);
+
+                    // Get the top 5 questions
+                    int count = 0;
+                    foreach (var item in data.questions)
+                    {
+                        response += $"{item.text} ({item.count})\n";
+                        count++;
+                        if (count == 5) break;
+                    }
+                }
+                else
+                {
+                    response = $"Error: {httpResponse.StatusCode}";
+                }
+            }
+            catch (Exception ex)
+            {
+                response = ex.Message;
+            }
+
+            return response;
+        }
+    }
+}
+
+
+------------------------------
+
+
+using anyltis how to fetch top5 most asked questions from qna maker 
+
+To fetch the top 5 most asked questions from QnA Maker using Analytics, you can use the following steps:
+
+Go to the QnA Maker portal (https://www.qnamaker.ai/) and sign in with your Azure account.
+
+Select your knowledge base from the list and click on the "Analytics" tab.
+
+The Analytics tab will show you a list of all the questions in your knowledge base, along with their respective frequencies. You can sort this list by frequency to see the most asked questions at the top.
+
+To see only the top 5 questions, you can use the "Top Questions" filter on the right side of the page. This will show you the top 5 questions based on the selected time period (e.g. last 7 days, last 30 days).
+
+You can also use the "Export" button to download the Analytics data as a CSV file, which you can then use to further analyze the data or integrate it into your own systems.
+
+Note that the Analytics feature is only available for paid QnA Maker plans. If you are using the free tier, you will not have access to this feature.
